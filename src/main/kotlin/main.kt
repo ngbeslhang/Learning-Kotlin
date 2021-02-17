@@ -173,5 +173,164 @@ fun main() {
         x++
     }
 
-    
+    // continue and break are the same as the ones in Python.
+    // You can give loops a specific label, which is in the format `name@`. Here's an example:
+    outerloop@ for (n in 2..100) {
+        for (d in 2 until n) {
+            if (n % d == 0) continue@outerloop // Works the same way for break too
+        }
+    }
+
+    next()
 }
+
+// Functions can be declared the following ways:
+
+fun hello(name: String): String {
+    // Asks for a param called name, must return a String type
+    return "Hello, ${name}!"
+}
+
+// One-liner function
+fun square(n: Int) = n * n
+
+// Just remember to use lowerCamelCase
+
+fun next() {
+    // Functions are called the same way as in Python
+    val greeting = hello("Adam")
+
+    // Not returning anything in a function does NOT implicitly return null; you must do so explicitly
+    // Functions that don't have any returns or empty returns return type Unit, which stands for
+    // "this function **never** returns any information", those that sometimes does need to return null
+    // in cases where it doesn't have any information to return
+
+    println(hello("quak"))
+    third()
+}
+
+// In Kotlin, you can overload functions, i.e. there can be multiple declarations of functions with the same
+// name as long as the parameters lists of each functions are distinguishably different. We'll take square
+// as an example of this
+
+fun square(n: Double) = n * n
+
+fun third() {
+    // https://stackoverflow.com/questions/45165143/get-type-of-a-variable-in-kotlin
+    println(square(1)::class.qualifiedName) // should return Int
+    println(square(3.21)::class.qualifiedName) // should return Double
+
+    fourth()
+}
+
+// Similar to `*args` in Python, you can use `vararg` in Kotlin
+// Unlike in Python, you can declare your normal, positional parameters *after* vararg (aka variadic parameter)
+// but there can only be at most one variadic param per function.
+
+// The type of the vararg will be:
+// - XArray if X is primitive type
+// - Array<X> if X is not a primitive type
+
+fun add(vararg n: Int) {
+    var total : Int = 0
+    for ((i, v) in n.withIndex()) {
+        total += v
+        if (i == (n.size - 1)) print("${v} = ") else print("${v} + ")
+    }
+    print("${total}\n")
+}
+
+// Overloaded with Double and returns with a String instead
+fun add(vararg n: Double): String {
+    var total : Double = 0.0
+    var str : String = ""
+    for ((i, v) in n.withIndex()) {
+        total += v
+        if (i == (n.size - 1)) str += "${v} = " else str += "${v} + "
+    }
+    str += "${total}" // Intentionally omitted `\n` to showcase println(add(10.2,11.0)) etc.
+
+    return str
+}
+
+// Unfortunately, **kwargs is not a thing in Kotlin, but you can define optional params with default values
+// A param with default value must still have its type specified explicitly
+fun profile(name: String, age: Int, regYear: Int = 2021) {
+    println("Name: ${name}")
+    println("Age: ${age}")
+    println("Registration Year: ${regYear}")
+}
+
+// Unlike in Python, where the default value of a param is evaluated once only when the function was defined,
+// Kotlin evaluates a param's default value *every time* the function is invoked/called, which means you can do this:
+fun tricky(x: Int, num: MutableList<Int> = mutableListOf()) {
+    // num will always get an empty list every time it's called, whereas in Python
+    // the same list (with existing elements) will be reused all the time
+    num.add(x)
+    println(num)
+}
+
+// Due to the confusion possible from the situation above, you should only set up a default value initializer as
+// - a constant
+// - a function call that always produce a new obj with the same value
+
+fun fourth() {
+    add(1,3,2,10,40,20,50,60)
+    add(1,2,3,4,5,6,7,8,9)
+    println(add(10.2,11.0))
+
+    // Like in Python, the named arguments can be reordered at will at the call site
+    profile("Gak", 19)
+    profile(age = 20, name = "Tan")
+    profile(regYear = 2010, name = "Tan", age = 28)
+
+    tricky(1)
+    tricky(2)
+
+    // You can call a variadic function with one array (BUT NOT A LIST OR ANY OTHER ITERABLES) that contains all the
+    // variadic argument by *spreading* it with `*` operator
+    val num = listOf(1,4,2,1,5,6)
+    add(*num.toIntArray())
+
+    // Kotlin's array system was inherited from Java, i.e.:
+    // - primitive types got their own array types
+    // - any other types use the generic Array type to which you can convert with `.toTypedArray()`
+
+    // You CANNOT spread a map into a function call and expect the values in the map to be passed to params
+    // named by the keys since the params' names must be known at compile time. If you need runtime-defined
+    // param names, you function must either:
+    // - take a map as param type, or
+    // - take `varg kwargs: Pair<String, X>, where X is the "LCM" of the param types, in the worst case `Any?`
+    //    - be prepared to have to typecast the param values, and note that you'll lose type safety
+    //    - such function can be called like `foo("bar" to 42, "test" to "hello`, since `to` is an infix func that
+    //      creates a Pair
+
+    fifth()
+}
+
+// Kotlin's object model is substantially different from Python's. Most importantly, classes are NOT
+// dynamically modifiable at runtime (there are exceptions to this, but the norm is to not try to do it)
+// There is a way to dynamically inspect classes & objs at runtime with a feature called *reflection*, but it should be
+// judiciously used.
+
+// All properties (attributes) & functions that might ever be needed on a class must be declared either:
+// - directly in the class body or
+// - as extension functions
+// ...which means you need to think carefully through your class design
+
+// A class without any properties or functions of its own can be declared this way
+class Nada // Yes, that's it; also class names should use UpperCamelCase just like in Python
+
+fun fifth() {
+    // an instance is created as if the class is called as a function, but this is just syntactic sugar
+    // because unlike Python, classes in Kotlin aren't really functions
+    val obj = Nada()
+}
+
+/* Every class that doesn't explicitly declare a parent class inherits from Any, which is the root of the
+ * class hierarchy, which also means that every class automatically has the following functions:
+ * - toString() returns a string representation of the object, similar to `__str__()` in Python
+ * - equals() checks if this obj is equal to some other object x of any class, which can be overwritten
+ * - hashCode() returns an integer that can be used by hash tables & for shortcutting complex quality comparisons
+ *     - objects that are equal according to equals() must have the same hash code
+ */
