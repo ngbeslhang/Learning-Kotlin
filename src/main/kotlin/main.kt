@@ -1,3 +1,5 @@
+import java.time.Year
+
 /*
  * You can alternatively declare main() as:
  *
@@ -321,12 +323,6 @@ fun fourth() {
 // A class without any properties or functions of its own can be declared this way
 class Nada // Yes, that's it; also class names should use UpperCamelCase just like in Python
 
-fun fifth() {
-    // an instance is created as if the class is called as a function, but this is just syntactic sugar
-    // because unlike Python, classes in Kotlin aren't really functions
-    val obj = Nada()
-}
-
 /* Every class that doesn't explicitly declare a parent class inherits from Any, which is the root of the
  * class hierarchy, which also means that every class automatically has the following functions:
  * - toString() returns a string representation of the object, similar to `__str__()` in Python
@@ -334,3 +330,54 @@ fun fifth() {
  * - hashCode() returns an integer that can be used by hash tables & for shortcutting complex quality comparisons
  *     - objects that are equal according to equals() must have the same hash code
  */
+
+// Of course, empty classes are pretty much useless, so we will now write one with some properties
+// The type of a property must be explicitly specified and it must have value if declared outside initializer
+// Declaring a property directly inside the class does not create a class-level property, but an instance-level one,
+// which means every instance of that class will have *its own* copy of properties that can be modified independently
+class Profile {
+    var username = ""
+    var age = 0
+    var regYear = 0
+}
+
+// Properties that don't have sensible default should be taken as constructor parameters, in the format
+// of `class Name(constructor: Type, param: Type, ...)` (this is the primary constructor)
+class Person(firstName: String, lastName: String, var age: Int) { // Yes, you can declare a property this way
+    val fullName = "$firstName $lastName"
+    var birthYear = 2021
+
+    init {
+        // val birthYear = 2021 - age  // You NEED to declare the property first outside init
+        birthYear -= age
+    }
+}
+
+fun fifth() {
+    // an instance is created as if the class is called as a function, but this is just syntactic sugar
+    // because unlike Python, classes in Kotlin aren't really functions
+    val obj = Nada()
+    val a = Profile()
+    val b = Profile()
+
+    a.username = "quak"
+    a.age = 18
+    a.regYear = 2016
+
+    b.username = "limo"
+    b.age = 21
+    b.regYear = 2020
+
+    println("${a.username}, age ${a.age}, registered at ${a.regYear}")
+    println("${b.username}, age ${b.age}, registered at ${b.regYear}")
+
+    // Obviously, you still get the same output in Python too, but the mechanism differs in that
+    // both instances would start WITHOUT ANY ATTRIBUTES; without assigning a value to any of the
+    // attributes, they are actually just accessing the class attribute instead of the instance attribute
+
+    // Because the set of properties of an obj is constrained to be exactly the same set that are declared
+    // at compile-time in the obj's class, it's not possible to add new properties to an obj/class at runtime
+    // , unlike in Python
+    val c = Person("Adam", "Smith", 21)
+    println("${c.fullName}, born ${c.birthYear}, age ${c.age}")
+}
